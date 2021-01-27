@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.6.0;
 
 import "./vendor/SafeMathChainlink.sol";
@@ -7,6 +8,22 @@ library Median {
   using SignedSafeMath for int256;
 
   int256 constant INT_MAX = 2**255-1;
+
+  /**
+   * @notice Returns the sorted middle, or the average of the two middle indexed items if the
+   * array has an even number of elements.
+   * @dev The list passed as an argument isn't modified. (Input data is copied on DELEGATECALL as this is a public lib fn)
+   * @dev This algorithm has expected runtime O(n), but for adversarially chosen inputs
+   * the runtime is O(n^2).
+   * @param list The list of elements to compare
+   */
+  function calculate__public(int256[] memory list)
+    public
+    pure
+    returns (int256)
+  {
+    return calculateInplace(list);
+  }
 
   /**
    * @notice Returns the sorted middle, or the average of the two middle indexed items if the
