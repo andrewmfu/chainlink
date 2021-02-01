@@ -244,7 +244,7 @@ contract Operator is
     if (allowed) {
       require(s_authorizedSenders[node].authorized == false, "Already authorized sender");
       uint256 index = s_authorizedSenderList.length;
-      s_authorizedSenders[node] = Authorization(allowed, index);
+      s_authorizedSenders[node] = Authorization(true, index);
       s_authorizedSenderList.push(node);
     }
     else {
@@ -253,7 +253,7 @@ contract Operator is
       uint256 index = s_authorizedSenders[node].index;
       s_authorizedSenderList[index] = s_authorizedSenderList[s_authorizedSenderList.length.sub(1)];
       s_authorizedSenderList.pop();
-      s_authorizedSenders[node].authorized = allowed;
+      s_authorizedSenders[node].authorized = false;
     }
   }
 
