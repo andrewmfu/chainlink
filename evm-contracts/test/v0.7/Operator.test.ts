@@ -50,7 +50,7 @@ describe('Operator', () => {
     operator = await operatorFactory
       .connect(roles.defaultAccount)
       .deploy(link.address, roles.defaultAccount.address)
-    await operator.setAuthorizedSender(roles.oracleNode.address, true)
+    await operator.setAuthorizedSenders([roles.oracleNode.address])
   })
 
   beforeEach(async () => {
@@ -68,7 +68,7 @@ describe('Operator', () => {
       'getChainlinkToken',
       'onTokenTransfer',
       'oracleRequest',
-      'setAuthorizedSender',
+      'setAuthorizedSenders',
       'getAuthorizedSenders',
       'withdraw',
       'withdrawable',
@@ -164,34 +164,56 @@ describe('Operator', () => {
     })
   })
 
-  describe('#setAuthorizedSender', () => {
+  describe('#setAuthorizedSenders', () => {
+    let newSenders: string[]
     describe('when called by the owner', () => {
-      beforeEach(async () => {
-        await operator
-          .connect(roles.defaultAccount)
-          .setAuthorizedSender(roles.stranger.address, true)
+      describe('setting 3 authorized senders', () => {
+        beforeEach(async () => {
+          newSenders = [
+            roles.oracleNode1.address,
+            roles.oracleNode2.address,
+            roles.oracleNode3.address,
+          ]
+          await operator
+            .connect(roles.defaultAccount)
+            .setAuthorizedSenders(newSenders)
+        })
+
+        it('adds the authorized nodes', async () => {
+          const authorizedSenders = await operator.getAuthorizedSenders()
+          assert.equal(newSenders.length, authorizedSenders.length)
+          for (let i = 0; i < authorizedSenders.length; i++) {
+            assert.equal(authorizedSenders[i], newSenders[i])
+          }
+        })
+
+        it('replaces the authorized nodes', async () => {
+          const originalAuthorization = await operator
+            .connect(roles.defaultAccount)
+            .isAuthorizedSender(roles.oracleNode.address)
+          assert.isFalse(originalAuthorization)
+        })
+
+        afterAll(async () => {
+          await operator
+            .connect(roles.defaultAccount)
+            .setAuthorizedSenders([roles.oracleNode.address])
+        })
       })
 
-      it('adds an authorized node', async () => {
-        const authorized = await operator.isAuthorizedSender(
-          roles.stranger.address,
-        )
-        assert.equal(true, authorized)
-        const senders = await operator.getAuthorizedSenders()
-        assert.equal(senders.length, 2)
-        assert.equal(senders[1], roles.stranger.address)
-      })
+      describe('setting 0 authorized senders', () => {
+        beforeEach(async () => {
+          newSenders = []
+        })
 
-      it('removes an authorized node', async () => {
-        await operator
-          .connect(roles.defaultAccount)
-          .setAuthorizedSender(roles.stranger.address, false)
-        const authorized = await operator.isAuthorizedSender(
-          roles.stranger.address,
-        )
-        assert.equal(false, authorized)
-        const senders = await operator.getAuthorizedSenders()
-        assert.equal(senders.length, 1)
+        it('reverts with a minimum senders message', async () => {
+          await matchers.evmRevert(async () => {
+            await operator
+              .connect(roles.defaultAccount)
+              .setAuthorizedSenders(newSenders),
+              'Must have at least 1 authorized sender'
+          })
+        })
       })
     })
 
@@ -200,7 +222,8 @@ describe('Operator', () => {
         await matchers.evmRevert(async () => {
           await operator
             .connect(roles.stranger)
-            .setAuthorizedSender(roles.stranger.address, true)
+            .setAuthorizedSenders([roles.stranger.address])
+          ;('Only callable by owner')
         })
       })
     })

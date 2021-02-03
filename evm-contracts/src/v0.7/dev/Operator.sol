@@ -27,11 +27,6 @@ contract Operator is
     uint8 dataVersion;
   }
 
-  struct Authorization {
-    bool authorized;
-    uint8 index;
-  }
-
   uint256 constant public EXPIRY_TIME = 5 minutes;
   uint256 constant private MAXIMUM_DATA_VERSION = 256;
   uint256 constant private MINIMUM_CONSUMER_GAS_LIMIT = 400000;
@@ -41,7 +36,7 @@ contract Operator is
 
   LinkTokenInterface internal immutable linkToken;
   mapping(bytes32 => Commitment) private s_commitments;
-  mapping(address => Authorization) private s_authorizedSenders;
+  mapping(address => bool) private s_authorizedSenders;
   address[] private s_authorizedSenderList;
   // Tokens sent for requests that have not been fulfilled yet
   uint256 private s_tokensInEscrow = ONE_FOR_CONSISTENT_GAS_COST;
@@ -219,43 +214,38 @@ contract Operator is
 
   /**
    * @notice Use this to check if a node is authorized for fulfilling requests
-   * @param node The address of the Chainlink node
+   * @param sender The address of the Chainlink node
    * @return The authorization status of the node
    */
-  function isAuthorizedSender(address node)
+  function isAuthorizedSender(address sender)
     external
     view
     override
     returns (bool)
   {
-    return s_authorizedSenders[node].authorized;
+    return s_authorizedSenders[sender];
   }
 
   /**
    * @notice Sets the fulfillment permission for a given node. Use `true` to allow, `false` to disallow.
-   * @param node The address of the Chainlink node
-   * @param allowed Bool value to determine if the node can fulfill requests
+   * @param senders The addresses of the authorized Chainlink node
    */
-  function setAuthorizedSender(address node, bool allowed)
+  function setAuthorizedSenders(address[] calldata senders)
     external
     override
     onlyOwner()
   {
-    if (allowed) {
-      require(!s_authorizedSenders[node].authorized, "Already authorized sender");
-      s_authorizedSenders[node] = Authorization(
-        true,
-        uint8(s_authorizedSenderList.length)
-      );
-      s_authorizedSenderList.push(node);
+    require(senders.length > 0, "Must have at least 1 authorized sender");
+    // Set previous authorized senders to false
+    for (uint256 i = 0; i < s_authorizedSenderList.length; i++) {
+      s_authorizedSenders[s_authorizedSenderList[i]] = false;
     }
-    else {
-      require(s_authorizedSenders[node].authorized, "Already unauthorized sender");
-      // copy last element into index slot, then pop last element
-      s_authorizedSenderList[s_authorizedSenders[node].index] = s_authorizedSenderList[s_authorizedSenderList.length.sub(1)];
-      s_authorizedSenderList.pop();
-      s_authorizedSenders[node].authorized = false;
+    // Set new to true
+    for (uint256 i = 0; i < senders.length; i++) {
+      s_authorizedSenders[senders[i]] = true;
     }
+    // Replace list
+    s_authorizedSenderList = senders;
   }
 
   /**
@@ -533,7 +523,7 @@ contract Operator is
    * @dev Reverts if `msg.sender` is not authorized to fulfill requests
    */
   modifier onlyAuthorizedSender() {
-    require(s_authorizedSenders[msg.sender].authorized, "Not an authorized node to fulfill requests");
+    require(s_authorizedSenders[msg.sender], "Not an authorized node to fulfill requests");
     _;
   }
 
