@@ -1165,7 +1165,7 @@ func TestIntegration_MultiwordV1_Sim(t *testing.T) {
 	app.Config.Set("ETH_HEAD_TRACKER_MAX_BUFFER_SIZE", 100)
 	app.Config.Set("MIN_OUTGOING_CONFIRMATIONS", 1)
 
-	_, err := operatorContract.SetAuthorizedSender(user, app.Store.KeyStore.Accounts()[0].Address, true)
+	_, err := operatorContract.SetAuthorizedSenders(user, [app.Store.KeyStore.Accounts()[0].Address])
 	require.NoError(t, err)
 	b.Commit()
 
