@@ -242,7 +242,7 @@ contract Operator is
     onlyOwner()
   {
     if (allowed) {
-      require(s_authorizedSenders[node].authorized == false, "Already authorized sender");
+      require(!s_authorizedSenders[node].authorized, "Already authorized sender");
       s_authorizedSenders[node] = Authorization(
         true,
         uint8(s_authorizedSenderList.length)
