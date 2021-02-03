@@ -29,7 +29,7 @@ contract Operator is
 
   struct Authorization {
     bool authorized;
-    uint256 index;
+    uint8 index;
   }
 
   uint256 constant public EXPIRY_TIME = 5 minutes;
@@ -245,7 +245,7 @@ contract Operator is
       require(s_authorizedSenders[node].authorized == false, "Already authorized sender");
       s_authorizedSenders[node] = Authorization(
         true,
-        s_authorizedSenderList.length
+        uint8(s_authorizedSenderList.length)
       );
       s_authorizedSenderList.push(node);
     }
