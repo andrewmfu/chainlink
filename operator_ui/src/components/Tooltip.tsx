@@ -2,7 +2,7 @@ import {
   createStyles,
   Theme,
   withStyles,
-  WithStyles,
+  WithStyles
 } from '@material-ui/core/styles'
 import MuiTooltip from '@material-ui/core/Tooltip'
 import React from 'react'
@@ -11,6 +11,7 @@ const styles = ({ palette, shadows, typography }: Theme) =>
   createStyles({
     lightTooltip: {
       background: palette.primary.contrastText,
+      // @ts-expect-error
       color: palette.text.primary,
       boxShadow: shadows[24],
       ...typography.h6,
