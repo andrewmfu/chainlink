@@ -41,6 +41,10 @@ contract Operator is
   // Tokens sent for requests that have not been fulfilled yet
   uint256 private s_tokensInEscrow = ONE_FOR_CONSISTENT_GAS_COST;
 
+  event AuthorizedSendersChanged(
+    address[] senders
+  );
+
   event OracleRequest(
     bytes32 indexed specId,
     address requester,
@@ -246,6 +250,7 @@ contract Operator is
     }
     // Replace list
     s_authorizedSenderList = senders;
+    emit AuthorizedSendersChanged(s_authorizedSenderList);
   }
 
   /**
