@@ -16,7 +16,7 @@ import { MaliciousRequester__factory } from '../../ethers/v0.4/factories/Malicio
 import { Operator__factory } from '../../ethers/v0.7/factories/Operator__factory'
 import { Consumer__factory } from '../../ethers/v0.7/factories/Consumer__factory'
 import { GasGuzzlingConsumer__factory } from '../../ethers/v0.6/factories/GasGuzzlingConsumer__factory'
-import { ContractReceipt, ContractTransaction } from 'ethers/contract'
+import { ContractReceipt } from 'ethers/contract'
 
 const v7ConsumerFactory = new Consumer__factory()
 const basicConsumerFactory = new BasicConsumer__factory()
@@ -166,7 +166,7 @@ describe('Operator', () => {
 
   describe('#setAuthorizedSenders', () => {
     let newSenders: string[]
-    let tx: ContractTransaction
+    let receipt: ContractReceipt
     describe('when called by the owner', () => {
       describe('setting 3 authorized senders', () => {
         beforeEach(async () => {
@@ -175,9 +175,10 @@ describe('Operator', () => {
             roles.oracleNode2.address,
             roles.oracleNode3.address,
           ]
-          tx = await operator
+          const tx = await operator
             .connect(roles.defaultAccount)
             .setAuthorizedSenders(newSenders)
+          receipt = await tx.wait()
         })
 
         it('adds the authorized nodes', async () => {
@@ -189,7 +190,6 @@ describe('Operator', () => {
         })
 
         it('emits an event', async () => {
-          const receipt = await tx.wait()
           assert.equal(receipt.events?.length, 1)
           const responseEvent = receipt.events?.[0]
           assert.equal(responseEvent?.event, 'AuthorizedSendersChanged')
